@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Razorpay Test</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<button id="payBtn">Pay Now</button>
+
+<script>
+document.getElementById("payBtn").onclick = function () {
+
+    // Step 1: Call your backend to create Razorpay order
+    fetch("http://localhost:8080/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userId: 1,
+            amount: 200         // Amount you want to test
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        console.log("Initiate Response:", data);
+
+        // Step 2: Open Razorpay Checkout
+        var options = {
+            "key": "rzp_test_RncnfKzFc0V91p",  // <-- Your Razorpay Test Key HERE
+            "amount": data.amountInPaise,
+            "currency": "INR",
+            "order_id": data.razorpayOrderId,
+
+            "handler": function (response) {
+                console.log("Payment Success:", response);
+
+                // Step 3: Confirm payment on backend
+                fetch("http://localhost:8080/payments/confirm", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        paymentId: data.paymentId,
+                        razorpayOrderId: response.razorpay_order_id,
+                        razorpayPaymentId: response.razorpay_payment_id,
+                        razorpaySignature: response.razorpay_signature
+                    })
+                })
+                .then(r => r.text())
+                .then(console.log);
+            },
+
+            // OPTIONAL — customize UI
+            "theme": {
+                "color": "#3399cc"
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.open();
+    });
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+<h2>Place Order</h2>
+
+<label>User ID:</label>
+<input type="number" id="userId" placeholder="Enter User ID"><br><br>
+
+<h3>Direct Order</h3>
+
+<label>Product ID:</label>
+<input type="number" id="productId"><br><br>
+
+<label>Quantity:</label>
+<input type="number" id="quantity" value="1"><br><br>
+
+<button onclick="placeDirectOrder()">Place Direct Order</button>
+
+<hr>
+
+<h3>Order From Cart</h3>
+<button onclick="placeCartOrder()">Place Order From Cart</button>
+
+<hr>
+
+<div id="result"></div>
+
+<script>
+// Autofill productId
+document.getElementById("productId").value =
+    localStorage.getItem("selectedProductId") || "";
+
+async function placeDirectOrder() {
+    const body = {
+        userId: Number(document.getElementById("userId").value),
+        items: [
+            {
+                productId: Number(document.getElementById("productId").value),
+                quantity: Number(document.getElementById("quantity").value)
+            }
+        ]
+    };
+
+    const res = await fetch("http://localhost:8080/orders/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    document.getElementById("result").innerHTML =
+        "<h3>Direct Order Placed!</h3><pre>" +
+        JSON.stringify(data, null, 2) + "</pre>";
+
+    localStorage.setItem("lastOrderId", data.id);
+}
+
+async function placeCartOrder() {
+    const userId = Number(document.getElementById("userId").value);
+
+    const res = await fetch("http://localhost:8080/orders/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userId)
+    });
+
+    const data = await res.json();
+    document.getElementById("result").innerHTML =
+        "<h3>Order From Cart Placed!</h3><pre>" +
+        JSON.stringify(data, null, 2) + "</pre>";
+
+    localStorage.setItem("lastOrderId", data.id);
+}
+</script>
+
+</body>
+</html>
